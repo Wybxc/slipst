@@ -1,0 +1,7 @@
+[package]
+name = "slipst"
+version = "0.1.0"
+entrypoint = "lib.typ"
+authors = ["Wybxc <@wybxc>"]
+license = "MIT"
+description = "A new paradigm for presentations in Typst, inspired by slipshow."
