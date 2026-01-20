@@ -1,5 +1,5 @@
 import { signal, effect } from "https://esm.sh/@preact/signals-core@1.12.1";
-import { debounce } from "https://esm.sh/es-toolkit@1.44.0";
+import { debounce } from "https://esm.sh/es-toolkit@1.44.0?standalone&exports=debounce";
 
 const currentSlip = signal(0);
 
@@ -35,4 +35,26 @@ effect(() => {
             slip.style.opacity = 0;
         }
     });
+});
+
+const layoutEffect = () => {
+    let up = document.querySelector(`[data-slip="${currentSlip.value}"]`)?.getAttribute("data-slip-up");
+    for (let i = currentSlip.value - 1; i > 0; i--) {
+        if (up != null) break;
+        up = document.querySelector(`[data-slip="${i}"]`)?.getAttribute("data-slip-up");
+    }
+    if (up == null) {
+        document.getElementById("container").style.top = 0;
+    } else {
+        const anchor = document.querySelector(`[data-slip="${up}"]`);
+        document.getElementById("container").style.top = `${-anchor.offsetTop}px`;
+    }
+};
+effect(layoutEffect);
+document.defaultView.addEventListener("resize", () => {
+    document.documentElement.style.setProperty("--transition-time", "0s");
+    layoutEffect();
+    setTimeout(() => {
+        document.documentElement.style.setProperty("--transition-time", "0.5s");
+    }, 0);
 });

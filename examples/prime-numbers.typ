@@ -1,4 +1,4 @@
-#import "../lib.typ": pause, slipst
+#import "../lib.typ": *
 #import "@preview/showybox:2.0.4": showybox
 #show: slipst.with()
 
@@ -8,25 +8,26 @@ What is a prime number?
 
 #pause
 
-#showybox(title: "Definition")[
+#showybox(title: "Definition", frame: (title-color: oklch(28%, 0.1, 142deg)))[
   A *prime number* is an integer divisible by exactly two integers: 1, and itself.
 
   We consider 1 not to be a prime number, as it is divisible only by one integer.
 ]
 
-#pause
+#pause <thm>
 
-#showybox(title: "Theorem")[
+#showybox(title: "Theorem", frame: (title-color: oklch(28%, 0.1, 255deg)))[
   There are infinitely many prime numbers.
 ]
 
-#pause
+#pause <proof>
+#up(<thm>)
 
 _Proof._
 
 Suppose there are finitely many prime numbers.
 
-Let's write $p_0, p_1, dots.c, p_(n-1)$ a list of all prime numbers. We define:
+Let's write $p_0, p_1, dots, p_(n-1)$ a list of all prime numbers. We define:
 
 $
   P = product_(i=0)^(n-1)p_i, quad
@@ -42,10 +43,12 @@ $
 $
 
 #pause
+#up(<proof>)
+
 Indeed,
 
 $
-  p "divides" N and p "divides" P arrow.r.double p "divides" 1
+  p "divides" N and p "divides" P arrow.r.double.long p "divides" 1
 $
 
 So $p$ is a prime that is not part of the $p_i$, a contradiction. #pause
