@@ -1,14 +1,25 @@
 import { signal, effect } from "https://esm.sh/@preact/signals-core@1.12.1";
 import { debounce } from "https://esm.sh/es-toolkit@1.44.0?standalone&exports=debounce";
 
-const currentSlip = signal(0);
-
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".slip > svg").forEach((svg) => {
         svg.style.width = "100%";
         svg.style.height = "auto";
     });
+});
 
+const currentSlip = signal(0);
+document.addEventListener("DOMContentLoaded", () => {
+    const savedSlip = sessionStorage.getItem("slipst-current-slip");
+    if (savedSlip != null) {
+        currentSlip.value = parseInt(savedSlip, 10);
+    }
+    effect(() => {
+        sessionStorage.setItem("slipst-current-slip", currentSlip.value.toString());
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("container").addEventListener("click", () => currentSlip.value += 1);
     document.getElementById("container").addEventListener("wheel", debounce((event) => {
         if (event.deltaY > 0) {
