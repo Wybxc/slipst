@@ -1,4 +1,5 @@
 import { signal, effect } from "https://esm.sh/@preact/signals-core@1.12.1";
+import { debounce } from "https://esm.sh/es-toolkit@1.44.0";
 
 const currentSlip = signal(0);
 
@@ -9,6 +10,13 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     document.getElementById("container").addEventListener("click", () => currentSlip.value += 1);
+    document.getElementById("container").addEventListener("wheel", debounce((event) => {
+        if (event.deltaY > 0) {
+            currentSlip.value += 1;
+        } else if (event.deltaY < 0) {
+            currentSlip.value -= 1;
+        }
+    }, 50));
     document.addEventListener("keydown", (event) => {
         if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(event.key)) {
             currentSlip.value += 1;
