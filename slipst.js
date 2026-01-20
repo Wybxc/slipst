@@ -1,5 +1,5 @@
 import { signal, effect } from "https://esm.sh/@preact/signals-core@1.12.1";
-import { debounce } from "https://esm.sh/es-toolkit@1.44.0?standalone&exports=debounce";
+import { debounce, isNotNil } from "https://esm.sh/es-toolkit@1.44.0?standalone&exports=debounce,isNotNil";
 
 document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll(".slip > svg").forEach((svg) => {
@@ -27,12 +27,26 @@ document.addEventListener("DOMContentLoaded", () => {
         } else if (event.deltaY < 0) {
             currentSlip.value -= 1;
         }
-    }, 50));
+    }, 50, { edges: ['leading'] }));
     document.addEventListener("keydown", (event) => {
         if (["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(event.key)) {
             currentSlip.value += 1;
         } else if (["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(event.key)) {
             currentSlip.value -= 1;
+        }
+    });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+    const maxSlip = Array.from(document.querySelectorAll(".slip")).map((slip) => {
+        return parseInt(slip.getAttribute("data-slip"), 10);
+    }).reduce((a, b) => Math.max(a, b), 0);
+
+    effect(() => {
+        if (currentSlip.value < 0) {
+            currentSlip.value = 0;
+        } else if (currentSlip.value > maxSlip) {
+            currentSlip.value = maxSlip;
         }
     });
 });
@@ -51,14 +65,14 @@ effect(() => {
 const layoutEffect = () => {
     let up = document.querySelector(`[data-slip="${currentSlip.value}"]`)?.getAttribute("data-slip-up");
     for (let i = currentSlip.value - 1; i > 0; i--) {
-        if (up != null) break;
+        if (isNotNil(up)) break;
         up = document.querySelector(`[data-slip="${i}"]`)?.getAttribute("data-slip-up");
     }
-    if (up == null) {
-        document.getElementById("container").style.top = 0;
-    } else {
+    if (isNotNil(up)) {
         const anchor = document.querySelector(`[data-slip="${up}"]`);
         document.getElementById("container").style.top = `${-anchor.offsetTop}px`;
+    } else {
+        document.getElementById("container").style.top = 0;
     }
 };
 effect(layoutEffect);
