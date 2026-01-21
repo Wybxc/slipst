@@ -1,0 +1,80 @@
+name: Build and Deploy Examples
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install Typst
+        uses: typst-community/setup-typst@v4
+
+      - name: Compile Typst examples to HTML
+        run: |
+          mkdir -p build/examples
+          for file in examples/*.typ; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file" .typ)
+              echo "Compiling $file to HTML..."
+              typst compile "$file" --format html --features html --root . "build/examples/${filename}.html"
+            fi
+          done
+
+      - name: Create index.html
+        run: |
+          cat > build/examples/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Slipst Examples</title>
+          </head>
+          <body>
+            <h1>Slipst Examples</h1>
+            <ul>
+          EOF
+
+          for file in examples/*.typ; do
+            if [ -f "$file" ]; then
+              filename=$(basename "$file" .typ)
+              echo "      <li><a href=\"${filename}.html\">$filename</a></li>" >> build/examples/index.html
+            fi
+          done
+
+          cat >> build/examples/index.html << 'EOF'
+            </ul>
+          </body>
+          </html>
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v2
+        with:
+          path: 'build/examples'
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v3
