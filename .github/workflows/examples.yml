@@ -32,7 +32,7 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file" .typ)
               echo "Compiling $file to HTML..."
-              typst compile "$file" --format html --features html --root . "build/examples/${filename}.html"
+              typst compile "$file" --format html --features html --font-path examples/fonts --root . "build/examples/${filename}.html"
             fi
           done
 
