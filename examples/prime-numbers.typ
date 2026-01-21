@@ -1,4 +1,4 @@
-#import "../lib.typ": *
+#import "/lib.typ": *
 #import "@preview/showybox:2.0.4": showybox
 #show: slipst.with()
 
