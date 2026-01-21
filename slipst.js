@@ -14,8 +14,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (savedSlip != null) {
         currentSlip.value = parseInt(savedSlip, 10);
     }
+    document.documentElement.style.setProperty("--transition-time", "0s");
+    setTimeout(() => {
+        document.documentElement.style.setProperty("--transition-time", "0.5s");
+    }, 1);
     effect(() => {
-        sessionStorage.setItem("slipst-current-slip", currentSlip.value.toString());
+        if (currentSlip.value > 0) {
+            sessionStorage.setItem("slipst-current-slip", currentSlip.value.toString());
+        }
     });
 });
 
@@ -43,8 +49,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }).reduce((a, b) => Math.max(a, b), 0);
 
     effect(() => {
-        if (currentSlip.value < 0) {
-            currentSlip.value = 0;
+        if (currentSlip.value <= 0) {
+            currentSlip.value = 1;
         } else if (currentSlip.value > maxSlip) {
             currentSlip.value = maxSlip;
         }
@@ -81,5 +87,5 @@ document.defaultView.addEventListener("resize", () => {
     layoutEffect();
     setTimeout(() => {
         document.documentElement.style.setProperty("--transition-time", "0.5s");
-    }, 0);
+    }, 1);
 });

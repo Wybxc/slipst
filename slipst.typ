@@ -1,12 +1,16 @@
+#import "utils.typ": *
+
 #let pause = if dictionary(std).at("html", default: none) == none {
   parbreak()
 } else {
   metadata("slipst-pause")
 }
-#let up(label) = metadata((slipst-action: (up: label)))
+#let up(label, offset: 0) = metadata((slipst-action: (up: label, offset: offset)))
 
-#let _should_strip(item) = {
-  type(item) == content and (item.func() == parbreak or item == [ ])
+#let slipst-counter = counter("slipst")
+
+#let _should_strip(it) = {
+  _is(it, parbreak) or _is(it, space)
 }
 
 #let _strip(slip) = {
@@ -19,16 +23,13 @@
   slip
 }
 
-#let _cut(content) = {
-  let (slips, remainder) = content.children.fold((slips: (), remainder: ()), (acc, item) => {
+#let _cut(it) = {
+  let (slips, remainder) = it.children.fold((slips: (), remainder: ()), (acc, it) => {
     let (slips, remainder) = acc
-    if (
-      (item.func() == metadata and item.value == "slipst-pause")
-        or (item.func() == heading and item.at("depth", default: 100) <= 2)
-    ) {
-      (slips + (remainder,), (item,))
+    if it.func() == metadata and it.value == "slipst-pause" {
+      (slips + (remainder,), (it,))
     } else {
-      (slips, remainder + (item,))
+      (slips, remainder + (it,))
     }
   })
   let slips = slips + (remainder,)
@@ -36,57 +37,68 @@
   slips
 }
 
-#let _slip(slip, width: auto) = context {
-  let idx = counter("slipst").get().first()
-  counter("slipst").step()
-
-  let attrs = (class: "slip", data-slip: str(idx))
+#let _slip(slip, width: auto, show-fn: it => it) = context {
+  let attrs = (class: "slip", data-slip: str(slipst-counter.get().first()))
 
   let actions = slip
-    .filter(item => item.func() == metadata)
-    .map(item => item.value)
+    .filter(it => it.func() == metadata)
+    .map(it => it.value)
     .filter(it => type(it) == dictionary)
     .map(it => it.at("slipst-action", default: none))
     .filter(it => type(it) == dictionary)
   let up = actions.rev().find(it => it.at("up", default: none) != none)
   if type(up) == dictionary {
     let anchor = up.at("up")
-    let anchor = counter("slipst").at(anchor).first()
-    attrs.insert("data-slip-up", str(anchor - 1))
+    let offset = up.at("offset", default: 0)
+    if type(anchor) == function {
+      anchor = anchor()
+    }
+    let anchor = slipst-counter.at(anchor).first()
+    attrs.insert("data-slip-up", str(anchor + offset))
   }
 
   html.elem(
     "div",
     attrs: attrs,
-    html.frame(block(width: width, slip.join())),
+    html.frame(show-fn({
+      block(width: width, slip.join())
+    })),
   )
+  slipst-counter.step()
 }
 
-#let slipst(body, width: 16cm) = {
+#let slipst(body, width: 16cm, show-fn: it => it) = {
   if dictionary(std).at("html", default: none) == none {
-    return body
+    return show-fn({
+      set page(width: width + 32pt, height: auto, margin: 16pt)
+      body
+      footnote(numbering: it => hide[it])[
+        #smallcaps[Note]: This is a quick preview of the content of the presentation.
+        For the full experience, please export to HTML.
+      ]
+    })
   }
 
   counter("slipst").update(1)
 
-  let slips = _cut(body)
-
-  html.html({
-    html.meta(charset: "utf-8")
-    html.meta(name: "viewport", content: "width=device-width, initial-scale=1")
-    html.head({
-      html.style(read("slipst.css"))
-      html.script(read("slipst.js"), type: "module")
-    })
-    html.body({
-      html.main(html.div(
-        id: "container",
-        {
-          for slip in slips {
-            _slip(slip, width: width)
-          }
-        },
-      ))
+  fmap(body, it => {
+    html.html({
+      html.meta(charset: "utf-8")
+      html.meta(name: "viewport", content: "width=device-width, initial-scale=1")
+      html.head({
+        html.style(read("slipst.css"))
+        html.script(read("slipst.js"), type: "module")
+      })
+      html.body({
+        html.main(html.div(
+          id: "container",
+          {
+            for slip in _cut(it) {
+              _slip(slip, width: width, show-fn: show-fn)
+            }
+          },
+        ))
+      })
     })
   })
 }
