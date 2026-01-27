@@ -1,4 +1,4 @@
-@import url("https://esm.sh/normalize.css@8.0.1/normalize.css") layer(normalize);
+@import url("normalize.css");
 
 :root {
     --transition-time: 0.5s;

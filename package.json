@@ -1,0 +1,17 @@
+{
+  "name": "slipst",
+  "type": "module",
+  "module": "slipst.ts",
+  "private": true,
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "@preact/signals-core": "^1.12.2",
+    "es-toolkit": "^1.44.0",
+    "normalize.css": "^8.0.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.6"
+  }
+}
