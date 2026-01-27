@@ -8,19 +8,14 @@ document.querySelectorAll(".slip > svg").forEach((svg) => {
   }
 });
 
-const currentSlip = signal(0);
-
-const savedSlip = sessionStorage.getItem("slipst-current-slip");
-if (savedSlip != null) {
-  currentSlip.value = parseInt(savedSlip, 10);
-}
-document.documentElement.style.setProperty("--transition-time", "0s");
-setTimeout(() => {
-  document.documentElement.style.setProperty("--transition-time", "0.5s");
-}, 1);
+const currentSlip = signal(parseInt(location.hash.slice(1), 10) || 1);
 effect(() => {
-  if (currentSlip.value > 0) {
-    sessionStorage.setItem("slipst-current-slip", currentSlip.value.toString());
+  history.replaceState(null, "", `#${currentSlip.value}`);
+});
+window.addEventListener("hashchange", () => {
+  const hashSlip = parseInt(location.hash.slice(1), 10);
+  if (!isNaN(hashSlip) && hashSlip !== currentSlip.value) {
+    currentSlip.value = hashSlip;
   }
 });
 
