@@ -1,4 +1,4 @@
-#import "/lib.typ": *
+#import "@preview/slipst:0.1.0": *
 #import "@preview/showybox:2.0.4": showybox
 #import "@preview/zebraw:0.6.1": *
 #set text(font: "MLMRoman12")
