@@ -104,10 +104,13 @@ const layoutEffect = () => {
 effect(layoutEffect);
 if (document.defaultView) {
   document.defaultView.addEventListener("resize", () => {
-    document.documentElement.style.setProperty("--transition-time", "0s");
+    document.documentElement.style.setProperty("--transition-duration", "0s");
     layoutEffect();
     setTimeout(() => {
-      document.documentElement.style.setProperty("--transition-time", "0.5s");
+      document.documentElement.style.setProperty(
+        "--transition-duration",
+        "0.5s",
+      );
     }, 1);
   });
 }

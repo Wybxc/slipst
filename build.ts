@@ -8,11 +8,6 @@ await Bun.build({
   splitting: false,
 });
 
-for await (const file of glob([
-  "*.typ",
-  "README.md",
-  "LICENSE",
-  "typst.toml",
-])) {
+for await (const file of glob(["*.typ", "*.md", "LICENSE", "*.toml"])) {
   await copyFile(file, `dist/${file}`);
 }

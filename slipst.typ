@@ -67,10 +67,10 @@
   slipst-counter.step()
 }
 
-#let slipst(body, width: 16cm, show-fn: it => it) = {
+#let slipst(body, width: 16cm, spacing: auto, margin: 0.5cm, show-fn: it => it) = {
   if dictionary(std).at("html", default: none) == none {
     return show-fn({
-      set page(width: width + 32pt, height: auto, margin: 16pt)
+      set page(width: width + margin * 2, height: auto, margin: margin)
       body
       footnote(numbering: it => hide[it])[
         #smallcaps[Note]: This is a quick preview of the content of the presentation.
@@ -79,26 +79,35 @@
     })
   }
 
+
   counter("slipst").update(1)
 
-  fmap(body, it => {
-    html.html({
+  fmap(body, it => context {
+    let spacing = if spacing == auto {
+      par.spacing
+    } else {
+      spacing
+    }
+    let variables = (
+      "--slip-width": width.to-absolute().cm(),
+      "--slip-spacing": spacing.to-absolute().cm(),
+      "--slip-margin": margin.to-absolute().cm(),
+    )
+    html.html(style: variables.pairs().map(((k, v)) => k + ": " + str(v)).join("; "), {
       html.meta(charset: "utf-8")
       html.meta(name: "viewport", content: "width=device-width, initial-scale=1")
       html.head({
         html.style(read("slipst.css"))
         html.script(read("slipst.js"), type: "module")
       })
-      html.body({
-        html.main(html.div(
-          id: "container",
-          {
-            for slip in _cut(it) {
-              _slip(slip, width: width, show-fn: show-fn)
-            }
-          },
-        ))
-      })
+      html.body(html.main(html.div(
+        id: "container",
+        {
+          for slip in _cut(it) {
+            _slip(slip, width: width, show-fn: show-fn)
+          }
+        },
+      )))
     })
   })
 }
