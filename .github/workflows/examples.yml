@@ -24,6 +24,14 @@ jobs:
 
       - name: Install Typst
         uses: typst-community/setup-typst@v4
+      
+      - name: Install Bun
+        uses: oven-sh/setup-bun@v2
+      
+      - name: Build Package
+        run: |
+          bun install
+          bun build.ts
 
       - name: Compile Typst examples to HTML
         run: |
@@ -32,6 +40,7 @@ jobs:
             if [ -f "$file" ]; then
               filename=$(basename "$file" .typ)
               echo "Compiling $file to HTML..."
+              sed -i.bak 's#import "@preview/slipst:[0-9\.]*"#import "../dist/lib.typ"#g' "$file"
               typst compile "$file" --format html --features html --font-path examples/fonts --root . "build/examples/${filename}.html"
             fi
           done
