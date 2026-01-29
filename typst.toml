@@ -1,6 +1,6 @@
 [package]
 name = "slipst"
-version = "0.1.0"
+version = "0.2.0"
 entrypoint = "lib.typ"
 authors = ["Wybxc <wybxc@qq.com>"]
 repository = "https://github.com/Wybxc/slipst"

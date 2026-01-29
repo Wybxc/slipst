@@ -14,7 +14,7 @@ typst compile your-presentation.typ --format html --features html
 ## Quick Start
 
 ```typst
-#import "@preview/slipst:0.1.0": *
+#import "@preview/slipst:0.2.0": *
 #show: slipst
 
 = First Slip

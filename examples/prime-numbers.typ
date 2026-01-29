@@ -1,4 +1,4 @@
-#import "@preview/slipst:0.1.0": *
+#import "@preview/slipst:0.2.0": *
 #import "@preview/showybox:2.0.4": showybox
 #show: slipst.with()
 

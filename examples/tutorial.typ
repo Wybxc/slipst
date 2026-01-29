@@ -1,4 +1,4 @@
-#import "@preview/slipst:0.1.0": *
+#import "@preview/slipst:0.2.0": *
 #import "@preview/showybox:2.0.4": showybox
 #import "@preview/zebraw:0.6.1": *
 #set text(font: "MLMRoman12")
@@ -49,7 +49,7 @@ let's see how to create your own Slipst presentations.
 First, import Slipst from the Typst Universe and use a `#show` rule to turn your document into a Slipst presentation.
 
 ```typ
-#import "@preview/slipst:0.1.0": *
+#import "@preview/slipst:0.2.0": *
 #show: slipst
 ```
 
