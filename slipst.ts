@@ -1,5 +1,6 @@
 import { signal, effect } from "@preact/signals-core";
 import { debounce, isNotNil } from "es-toolkit";
+import AnyTouch from "any-touch";
 
 document.querySelectorAll(".slip > svg").forEach((svg) => {
   if (svg instanceof SVGElement) {
@@ -47,6 +48,11 @@ if (container) {
       edges: ["leading"],
     }),
   );
+  const anyTouch = new AnyTouch(container);
+  anyTouch.on("swipeup", nextSlip);
+  anyTouch.on("swipeleft", nextSlip);
+  anyTouch.on("swiperight", previousSlip);
+  anyTouch.on("swipedown", previousSlip);
 }
 document.addEventListener("keydown", (event) => {
   if (
