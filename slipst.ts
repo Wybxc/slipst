@@ -19,36 +19,6 @@ window.addEventListener("hashchange", () => {
   }
 });
 
-const container = document.getElementById("container");
-if (container) {
-  container.addEventListener("click", () => (currentSlip.value += 1));
-  container.addEventListener(
-    "wheel",
-    debounce(
-      (event) => {
-        if (event.deltaY > 0) {
-          currentSlip.value += 1;
-        } else if (event.deltaY < 0) {
-          currentSlip.value -= 1;
-        }
-      },
-      50,
-      { edges: ["leading"] },
-    ),
-  );
-}
-document.addEventListener("keydown", (event) => {
-  if (
-    ["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(event.key)
-  ) {
-    currentSlip.value += 1;
-  } else if (
-    ["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(event.key)
-  ) {
-    currentSlip.value -= 1;
-  }
-});
-
 const maxSlip = Array.from(document.querySelectorAll(".slip"))
   .map((slip) => {
     const attr = slip.getAttribute("data-slip");
@@ -56,11 +26,37 @@ const maxSlip = Array.from(document.querySelectorAll(".slip"))
   })
   .reduce((a, b) => Math.max(a, b), 0);
 
-effect(() => {
-  if (currentSlip.value <= 0) {
-    currentSlip.value = 1;
-  } else if (currentSlip.value > maxSlip) {
-    currentSlip.value = maxSlip;
+function nextSlip() {
+  if (currentSlip.value < maxSlip) {
+    currentSlip.value += 1;
+  }
+}
+
+function previousSlip() {
+  if (currentSlip.value > 1) {
+    currentSlip.value -= 1;
+  }
+}
+
+const container = document.getElementById("container");
+if (container) {
+  container.addEventListener("click", nextSlip);
+  container.addEventListener(
+    "wheel",
+    debounce((event) => (event.deltaY > 0 ? nextSlip() : previousSlip()), 50, {
+      edges: ["leading"],
+    }),
+  );
+}
+document.addEventListener("keydown", (event) => {
+  if (
+    ["ArrowRight", "ArrowDown", "PageDown", " ", "Enter"].includes(event.key)
+  ) {
+    nextSlip();
+  } else if (
+    ["ArrowLeft", "ArrowUp", "PageUp", "Backspace"].includes(event.key)
+  ) {
+    previousSlip();
   }
 });
 
