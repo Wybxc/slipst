@@ -9,20 +9,6 @@
 
 #let slipst-counter = counter("slipst")
 
-#let _should_strip(it) = {
-  _is(it, parbreak) or _is(it, space)
-}
-
-#let _strip(slip) = {
-  let _ = while _should_strip(slip.first(default: none)) {
-    slip.remove(0)
-  }
-  let _ = while _should_strip(slip.last(default: none)) {
-    slip.pop()
-  }
-  slip
-}
-
 #let _cut(it) = {
   let (slips, remainder) = it.children.fold((slips: (), remainder: ()), (acc, it) => {
     let (slips, remainder) = acc
