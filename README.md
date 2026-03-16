@@ -93,7 +93,7 @@ You can also provide an `offset` to `#up` to select a slip relative to the chose
 For dynamic selections, `#up` can also accept a function that returns a selector. This is useful with context-aware selectors like [`here()`](https://typst.app/docs/reference/introspection/here/). Combined with `offset`, you can slide up the previous slip without an explicit label:
 
 ```typst
-#up(it => here(), offset: -1)
+#up(() => here(), offset: -1)
 ```
 
 ## Roadmap
