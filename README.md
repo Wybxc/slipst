@@ -14,7 +14,7 @@ typst compile your-presentation.typ --format html --features html
 ## Quick Start
 
 ```typst
-#import "@preview/slipst:0.2.0": *
+#import "@preview/slipst:0.2.1": *
 #show: slipst
 
 = First Slip
@@ -108,6 +108,10 @@ For dynamic selections, `#up` can also accept a function that returns a selector
 - (TODO) PDF handout export.
 
 ## Changelog
+
+### 0.2.1
+
+- Fixed: slips not dividing correctly in certain edge cases.
 
 ### 0.2.0
 
