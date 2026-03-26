@@ -8,10 +8,15 @@
 #let up(label, offset: 0, dy: 0) = metadata((slipst-action: (up: label, offset: offset, dy: dy)))
 #let alter(num) = metadata((slipst-action: (alter: num)))
 
+#let preview-mode = state("preview-mode", false)
 #let slipst-counter = counter("slipst")
 #let slipst-alter-counter = counter("slipst-alter")
 
 #let uncover(ranges, body) = context {
+  if preview-mode.get() {
+    return body
+  }
+
   let ranges = _parse_ranges(ranges)
   let alter-idx = slipst-alter-counter.get().first()
   let should-show = _is_in_ranges(alter-idx, ranges)
@@ -96,6 +101,7 @@
   if dictionary(std).at("html", default: none) == none {
     return show-fn({
       set page(width: width + margin * 2, height: auto, margin: margin)
+      preview-mode.update(true)
       body
       footnote(numbering: it => hide[it])[
         #smallcaps[Note]: This is a quick preview of the content of the presentation.
@@ -104,7 +110,7 @@
     })
   }
 
-
+  preview-mode.update(false)
   counter("slipst").update(1)
 
   fmap(body, it => context {
