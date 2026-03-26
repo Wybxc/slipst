@@ -29,3 +29,20 @@ However, sometimes you may want to scroll to the middle of a slip. For example, 
 #up(<long>, dy: 5cm)
 
 We use `#up(<long>, dy: 5cm)` to scroll to a position 5cm below the top of the slip `<long>`.
+
+#pause
+#up(here)
+
+== Altering Slips with `alter`
+
+#alter(3)
+
+This appears in alter 1, 2, and 3.
+
+#uncover("2")[
+  This only appears in alter 2.
+]
+
+#pause
+
+TODO: finish the alter section

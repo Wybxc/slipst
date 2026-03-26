@@ -9,14 +9,47 @@ document.querySelectorAll(".slip > svg").forEach((svg) => {
   }
 });
 
-const currentSlip = signal(parseInt(location.hash.slice(1), 10) || 1);
+/**
+ * Parse the hash in the URL to get the current slip index and alter index.
+ * The hash should be in the format "#slip-alter".
+ */
+function parseHash() {
+  const hashGroups = /^(?<slip>\d+)(?:-(?<alter>\d+))?/.exec(
+    location.hash.slice(1),
+  )?.groups;
+
+  let slip = parseInt(hashGroups?.slip ?? "1", 10);
+  if (isNaN(slip) || slip < 1) {
+    slip = 1;
+  }
+
+  let alter = parseInt(hashGroups?.alter ?? "0", 10);
+  if (isNaN(alter) || alter < 0) {
+    alter = 0;
+  }
+
+  return { slip, alter };
+}
+
+const { slip: initialSlip, alter: initialAlter } = parseHash();
+const currentSlip = signal(initialSlip);
+const currentSlipAlter = signal(initialAlter);
 effect(() => {
-  history.replaceState(null, "", `#${currentSlip.value}`);
+  let hash = `#${currentSlip.value}`;
+  if (currentSlipAlter.value > 1) {
+    hash += `-${currentSlipAlter.value}`;
+  }
+  if (location.hash !== hash) {
+    history.replaceState(null, "", hash);
+  }
 });
 window.addEventListener("hashchange", () => {
-  const hashSlip = parseInt(location.hash.slice(1), 10);
-  if (!isNaN(hashSlip) && hashSlip !== currentSlip.value) {
-    currentSlip.value = hashSlip;
+  const { slip, alter } = parseHash();
+  if (slip !== currentSlip.value) {
+    currentSlip.value = slip;
+  }
+  if (alter !== currentSlipAlter.value) {
+    currentSlipAlter.value = alter;
   }
 });
 
@@ -27,15 +60,42 @@ const maxSlip = Array.from(document.querySelectorAll(".slip"))
   })
   .reduce((a, b) => Math.max(a, b), 0);
 
+/**
+ * Map from slip index to number of alters.
+ */
+const slipAlters = new Map(
+  Array.from(document.querySelectorAll(".slip")).map((slip) => {
+    const attrSlip = slip.getAttribute("data-slip");
+    const attrAlter = slip.getAttribute("data-slip-alter-num");
+    const slipIndex = attrSlip !== null ? parseInt(attrSlip, 10) : 0;
+    const alterNum = attrAlter !== null ? parseInt(attrAlter, 10) : 1;
+    return [slipIndex, alterNum] as const;
+  }),
+);
+
+/**
+ * Go to the next slip or alter.
+ */
 function nextSlip() {
-  if (currentSlip.value < maxSlip) {
+  const alterNum = slipAlters.get(currentSlip.value) ?? 1;
+  if (currentSlipAlter.value < alterNum) {
+    currentSlipAlter.value += 1;
+  } else if (currentSlip.value < maxSlip) {
     currentSlip.value += 1;
+    currentSlipAlter.value = 1;
   }
 }
 
+/**
+ * Go to the previous slip or alter.
+ */
 function previousSlip() {
-  if (currentSlip.value > 1) {
+  if (currentSlipAlter.value > 1) {
+    currentSlipAlter.value -= 1;
+  } else if (currentSlip.value > 1) {
     currentSlip.value -= 1;
+    const alterNum = slipAlters.get(currentSlip.value) ?? 1;
+    currentSlipAlter.value = alterNum;
   }
 }
 
@@ -68,12 +128,29 @@ document.addEventListener("keydown", (event) => {
 
 effect(() => {
   document.querySelectorAll(".slip").forEach((slip) => {
-    const attr = slip.getAttribute("data-slip");
-    const slipIndex = attr !== null ? parseInt(attr, 10) : 0;
+    const attrSlip = slip.getAttribute("data-slip");
+    const slipIndex = attrSlip !== null ? parseInt(attrSlip, 10) : 0;
+
+    const attrAlter = slip.getAttribute("data-slip-alter-idx");
+    const alterIdx = attrAlter !== null ? parseInt(attrAlter, 10) : 1;
+
     if (slip instanceof HTMLElement) {
-      if (slipIndex <= currentSlip.value) {
-        slip.style.opacity = "1";
+      if (slipIndex < currentSlip.value) {
+        // Previous slips, only show the last alter.
+        if (alterIdx !== (slipAlters.get(slipIndex) ?? 1)) {
+          slip.style.opacity = "0";
+        } else {
+          slip.style.opacity = "1";
+        }
+      } else if (slipIndex === currentSlip.value) {
+        // Current slip, show the current alter.
+        if (alterIdx === currentSlipAlter.value) {
+          slip.style.opacity = "1";
+        } else {
+          slip.style.opacity = "0";
+        }
       } else {
+        // Future slips, hide all alters.
         slip.style.opacity = "0";
       }
     }
@@ -81,6 +158,7 @@ effect(() => {
 });
 
 const layoutEffect = () => {
+  // Find the nearest slip with a "data-slip-up" attribute, starting from the current slip and going upwards.
   let up = document
     .querySelector(`[data-slip="${currentSlip.value}"]`)
     ?.getAttribute("data-slip-up");
@@ -97,8 +175,14 @@ const layoutEffect = () => {
       .querySelector(`[data-slip="${i}"]`)
       ?.getAttribute("data-slip-dy");
   }
+
   if (isNotNil(up)) {
-    const anchor = document.querySelector(`[data-slip="${up}"]`);
+    const anchors = document.querySelectorAll(`[data-slip="${up}"]`);
+    const anchor = Array.from(anchors)
+      .filter((anchor) => anchor instanceof HTMLElement)
+      .filter(
+        (anchor) => window.getComputedStyle(anchor).display !== "none",
+      )[0];
     const container = document.getElementById("container");
     if (anchor instanceof HTMLElement && container instanceof HTMLElement) {
       if (isNotNil(dy)) {

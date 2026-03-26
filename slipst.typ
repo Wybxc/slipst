@@ -6,8 +6,21 @@
   metadata("slipst-pause")
 }
 #let up(label, offset: 0, dy: 0) = metadata((slipst-action: (up: label, offset: offset, dy: dy)))
+#let alter(num) = metadata((slipst-action: (alter: num)))
 
 #let slipst-counter = counter("slipst")
+#let slipst-alter-counter = counter("slipst-alter")
+
+#let uncover(ranges, body) = context {
+  let ranges = _parse_ranges(ranges)
+  let alter-idx = slipst-alter-counter.get().first()
+  let should-show = _is_in_ranges(alter-idx, ranges)
+  if should-show {
+    body
+  } else {
+    hide(body)
+  }
+}
 
 #let _cut(it) = {
   let (slips, remainder) = it.children.fold((slips: (), remainder: ()), (acc, it) => {
@@ -24,7 +37,8 @@
 }
 
 #let _slip(slip, width: auto, show-fn: it => it) = context {
-  let attrs = (class: "slip", data-slip: str(slipst-counter.get().first()))
+  let slip-idx = slipst-counter.get().first()
+  let attrs = (class: "slip", data-slip: str(slip-idx))
 
   let actions = slip
     .filter(it => it.func() == metadata)
@@ -33,6 +47,14 @@
     .map(it => it.at("slipst-action", default: none))
     .filter(it => type(it) == dictionary)
   let up = actions.rev().find(it => it.at("up", default: none) != none)
+  let alter = actions.rev().find(it => it.at("alter", default: none) != none)
+  let alter-num = if type(alter) == dictionary {
+    alter.at("alter", default: 1)
+  } else {
+    1
+  }
+  attrs.insert("data-slip-alter-num", str(alter-num))
+
   if type(up) == dictionary {
     let anchor = up.at("up")
 
@@ -52,13 +74,21 @@
     }
   }
 
-  html.elem(
-    "div",
-    attrs: attrs,
-    html.frame(show-fn({
-      block(width: width, slip.join())
-    })),
-  )
+  for alter-idx in range(1, alter-num + 1) {
+    let attrs-local = (
+      "data-slip-alter-idx": str(alter-idx),
+      "style": "grid-row: " + str(slip-idx) + "; grid-column: 1;",
+      ..attrs,
+    )
+    html.elem(
+      "div",
+      attrs: attrs-local,
+      html.frame(show-fn({
+        slipst-alter-counter.update(alter-idx)
+        block(width: width, slip.join())
+      })),
+    )
+  }
   slipst-counter.step()
 }
 
