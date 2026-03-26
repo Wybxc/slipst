@@ -53,6 +53,8 @@ main {
   margin-top: var(--relative-margin);
   box-sizing: border-box;
 
+  isolation: isolate;
+
   top: 0;
   transition: top var(--transition-duration) ease-in-out;
 }
@@ -61,5 +63,6 @@ main {
   width: 100%;
 
   opacity: 0;
+  mix-blend-mode: plus-lighter;
   transition: opacity var(--transition-duration) ease-in-out;
 }
