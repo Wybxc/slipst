@@ -84,17 +84,29 @@ const layoutEffect = () => {
   let up = document
     .querySelector(`[data-slip="${currentSlip.value}"]`)
     ?.getAttribute("data-slip-up");
+  let dy = document
+    .querySelector(`[data-slip="${currentSlip.value}"]`)
+    ?.getAttribute("data-slip-dy");
+
   for (let i = currentSlip.value - 1; i > 0; i--) {
     if (isNotNil(up)) break;
     up = document
       .querySelector(`[data-slip="${i}"]`)
       ?.getAttribute("data-slip-up");
+    dy = document
+      .querySelector(`[data-slip="${i}"]`)
+      ?.getAttribute("data-slip-dy");
   }
   if (isNotNil(up)) {
     const anchor = document.querySelector(`[data-slip="${up}"]`);
     const container = document.getElementById("container");
     if (anchor instanceof HTMLElement && container instanceof HTMLElement) {
-      container.style.top = `${-anchor.offsetTop}px`;
+      if (isNotNil(dy)) {
+        const dyValue = parseFloat(dy);
+        container.style.top = `calc(${-anchor.offsetTop}px - ${dyValue} * var(--slip-1cm))`;
+      } else {
+        container.style.top = `${-anchor.offsetTop}px`;
+      }
     }
   } else {
     const container = document.getElementById("container");

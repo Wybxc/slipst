@@ -5,8 +5,10 @@
   --slip-margin: 0;
   --slip-spacing: 0;
 
-  --relative-spacing: calc(var(--slip-spacing) / var(--slip-width) * 100em);
-  --relative-margin: calc(var(--slip-margin) / var(--slip-width) * 100em);
+  --slip-1cm: calc(1 / var(--slip-width) * 100em);
+
+  --relative-spacing: calc(var(--slip-spacing) * var(--slip-1cm));
+  --relative-margin: calc(var(--slip-margin) * var(--slip-1cm));
 
   --transition-duration: 0.5s;
 }

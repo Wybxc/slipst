@@ -5,7 +5,7 @@
 } else {
   metadata("slipst-pause")
 }
-#let up(label, offset: 0) = metadata((slipst-action: (up: label, offset: offset)))
+#let up(label, offset: 0, dy: 0) = metadata((slipst-action: (up: label, offset: offset, dy: dy)))
 
 #let slipst-counter = counter("slipst")
 
@@ -35,12 +35,21 @@
   let up = actions.rev().find(it => it.at("up", default: none) != none)
   if type(up) == dictionary {
     let anchor = up.at("up")
+
     let offset = up.at("offset", default: 0)
+    assert(type(offset) == int, message: "Offset must be a number")
+
+    let dy = up.at("dy", default: 0)
+    assert(type(dy) == length or dy == 0, message: "dy must be a length")
+
     if type(anchor) == function {
       anchor = anchor()
     }
     let anchor = slipst-counter.at(anchor).first()
     attrs.insert("data-slip-up", str(anchor + offset))
+    if dy != 0 {
+      attrs.insert("data-slip-dy", str(dy.to-absolute().cm()))
+    }
   }
 
   html.elem(
