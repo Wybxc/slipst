@@ -99,16 +99,16 @@ function previousSlip() {
   }
 }
 
-const container = document.getElementById("container");
-if (container) {
-  container.addEventListener("click", nextSlip);
-  container.addEventListener(
+const main = document.querySelector("main");
+if (main) {
+  main.addEventListener("click", nextSlip);
+  main.addEventListener(
     "wheel",
     debounce((event) => (event.deltaY > 0 ? nextSlip() : previousSlip()), 50, {
       edges: ["leading"],
     }),
   );
-  const anyTouch = new AnyTouch(container);
+  const anyTouch = new AnyTouch(main);
   anyTouch.on("swipeup", nextSlip);
   anyTouch.on("swipeleft", nextSlip);
   anyTouch.on("swiperight", previousSlip);
