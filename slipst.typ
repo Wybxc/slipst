@@ -99,13 +99,15 @@
 
 #let slipst(body, width: 16cm, spacing: auto, margin: 0.5cm, show-fn: it => it) = {
   if dictionary(std).at("html", default: none) == none {
-    return show-fn({
+    return context show-fn({
       set page(width: width + margin * 2, height: auto, margin: margin)
+      let size = measure(body)
       preview-mode.update(true)
       body
       footnote(numbering: it => hide[it])[
         #smallcaps[Note]: This is a quick preview of the content of the presentation.
         For the full experience, please export to HTML.
+        (Estimated size: #(calc.ceil(size.height.cm() / width.cm() * 9 / 16)) screens.)
       ]
     })
   }
