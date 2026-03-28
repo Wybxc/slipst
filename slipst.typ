@@ -12,7 +12,7 @@
 #let slipst-counter = counter("slipst")
 #let slipst-alter-counter = counter("slipst-alter")
 
-#let uncover(ranges, body) = context {
+#let uncover(ranges, cover: hide, body) = context {
   if preview-mode.get() {
     return body
   }
@@ -23,7 +23,7 @@
   if should-show {
     body
   } else {
-    hide(body)
+    cover(body)
   }
 }
 
