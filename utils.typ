@@ -12,7 +12,7 @@
 }
 
 #let _should_strip(it) = {
-  _is(it, parbreak) or _is(it, space)
+  _is(it, parbreak) or _is(it, space) or (_is(it, sequence) and it.children.len() == 0)
 }
 
 #let _strip(slip) = {
