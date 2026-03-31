@@ -14,7 +14,7 @@ typst compile your-presentation.typ --format html --features html
 ## Quick Start
 
 ```typst
-#import "@preview/slipst:0.2.1": *
+#import "@preview/slipst:0.3.0": *
 #show: slipst
 
 = First Slip
@@ -30,7 +30,7 @@ waiting for the presenter to navigate to the next slip.
 The second slip appears after navigating down.
 ```
 
-Refer to the [tutorial](https://slipst.wybxc.cc/tutorial.html) for a more comprehensive guide.
+Refer to the [tutorial](https://slipst.wybxc.cc/tutorial.html) and [advanced guide](https://slipst.wybxc.cc/advanced.html) for a more comprehensive guide.
 
 ## References
 
@@ -90,24 +90,56 @@ You can also provide an `offset` to `#up` to select a slip relative to the chose
 #up(<label>, offset: -1)
 ```
 
+And the `dy` parameter allows you to specify a custom vertical distance for the sliding animation. For example, to scroll to 5cm below the top of the selected slip:
+
+```typst
+#up(<label>, dy: 5cm)
+```
+
 For dynamic selections, `#up` can also accept a function that returns a selector. This is useful with context-aware selectors like [`here()`](https://typst.app/docs/reference/introspection/here/). Combined with `offset`, you can slide up the previous slip without an explicit label:
 
 ```typst
 #up(() => here(), offset: -1)
 ```
 
+### Replacing Animations
+
+Refer to the [advanced guide](https://slipst.wybxc.cc/advanced.html).
+
+### Handout Export
+
+Slipst can also export a PDF handout containing all slips. To enable this, add the `handout: true` parameter to the `slipst` show rule:
+
+```typst
+#show: slipst.with(handout: true)
+```
+
+Then you can export the PDF version of your presentation using the `pdf` format:
+
+```bash
+typst compile your-presentation.typ --format pdf
+```
+
 ## Roadmap
 
 - Basic slip functionality with up/down navigation.
 - Persistent state across sessions.
-- (TODO) Slips replacement animations, as well as Cetz and Flether animations.
+- Slips replacing animations, as well as Cetz and Flether animations.
 - (TODO) Custom aspect ratios for the visual area.
 - (TODO) Visual structure for subslips.
 - (TODO) Whiteboard mode for live drawing.
 - (TODO) Advanced navigation.
-- (TODO) PDF handout export.
+- PDF handout export.
 
 ## Changelog
+
+### 0.3.0
+
+- Slips replacing animations are now supported, allowing you to create more complex and dynamic presentations.
+- Now you can scroll up to positions inside a slip, instead of just the top of each slip.
+- Added support for PDF handout export.
+- Fixed: more edges cases in slip division and navigation.
+- Fixed: click events not handled correctly in certain scenarios.
 
 ### 0.2.1
 

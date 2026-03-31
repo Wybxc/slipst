@@ -1,4 +1,4 @@
-#import "../dist/lib.typ": *
+#import "@preview/slipst:0.3.0": *
 #import "@preview/showybox:2.0.4": showybox
 #import "@preview/zebraw:0.6.1": *
 #import "@preview/fletcher:0.5.8" as fletcher: diagram, edge, node
