@@ -12,8 +12,8 @@
 #let slipst-counter = counter("slipst")
 #let slipst-alter-counter = counter("slipst-alter")
 
-#let uncover(ranges, cover: hide, reduce: false, body) = {
-  let reducer = () => {
+#let uncover(ranges, cover: hide, raw: false, body) = {
+  let inner = () => {
     if preview-mode.get() {
       return body
     }
@@ -27,12 +27,14 @@
       cover(body)
     }
   }
-  if reduce {
-    reducer()
+  if raw {
+    inner()
   } else {
-    context reducer()
+    context inner()
   }
 }
+
+#let only = uncover.with(cover: it => none)
 
 #let _cut(it) = {
   let (slips, remainder) = it.children.fold((slips: (), remainder: ()), (acc, it) => {
