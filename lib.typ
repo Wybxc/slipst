@@ -1,1 +1,1 @@
-#import "slipst.typ": pause, slipst, up, alter, uncover, only
+#import "slipst.typ": pause, slipst, up, alter, uncover, only, boxjs, animejs

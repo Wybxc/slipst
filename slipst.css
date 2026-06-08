@@ -1,10 +1,12 @@
 @import url("normalize.css");
 
 :root {
+  /* Typst passes logical lengths in centimeters; CSS scales them to viewport units. */
   --slip-width: 1;
   --slip-margin: 0;
   --slip-spacing: 0;
 
+  /* 1 Typst cm expressed in the responsive browser coordinate system. */
   --slip-1cm: calc(1 / var(--slip-width) * 100em);
 
   --relative-spacing: calc(var(--slip-spacing) * var(--slip-1cm));
@@ -14,6 +16,7 @@
 }
 
 body {
+  /* Center the fixed 16:9 presentation viewport in the browser window. */
   display: grid;
   place-items: center;
   width: 100vw;
@@ -24,6 +27,7 @@ body {
 }
 
 main {
+  /* Use the largest 16:9 rectangle that fits inside the viewport. */
   overflow: hidden;
   width: calc(100vh * 16 / 9);
   height: 100vh;
@@ -39,6 +43,7 @@ main {
 }
 
 #container {
+  /* The JS changes top to create the vertical slip scrolling animation. */
   position: relative;
   width: 100%;
 
@@ -60,9 +65,17 @@ main {
 }
 
 .slip {
+  /* Slips are always present in the DOM; JS fades the active layers in/out. */
   width: 100%;
 
   opacity: 0;
   mix-blend-mode: plus-lighter;
   transition: opacity var(--transition-duration) ease-in-out;
+}
+
+.slipst-boxjs {
+  /* Inline widgets manage their own internal layout inside a ShadowRoot. */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }

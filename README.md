@@ -106,6 +106,128 @@ For dynamic selections, `#up` can also accept a function that returns a selector
 
 Refer to the [advanced guide](https://slipst.wybxc.cc/advanced.html).
 
+### Inline Boxjs Widgets
+
+Slipst can embed self-contained HTML/CSS/JavaScript widgets directly in a
+presentation with `#boxjs(...)`. The widget is rendered in a ShadowRoot, so its
+CSS stays local to the widget.
+
+~~~typst
+#boxjs(
+  height: 4cm,
+  class: "demo-widget",
+  style: "display: grid; place-items: center; background: #f8fafc;",
+  html: ```html
+    <button class="button">Click me</button>
+  ```,
+  css: ```css
+    .button {
+      padding: 0.7em 1em;
+      border: 0;
+      border-radius: 999px;
+      background: #2563eb;
+      color: white;
+    }
+  ```,
+  js: ```js
+    const button = root.querySelector(".button");
+    button.addEventListener("click", () => {
+      button.textContent = `Clicked ${box.id}`;
+    });
+  ```,
+)
+~~~
+
+The JavaScript snippet receives these variables:
+
+- `root`: a `ShadowRoot` containing the widget HTML and CSS.
+- `host`: the outer `.slipst-boxjs` element.
+- `box`: metadata about the widget instance, including `index`, `id`, and `kind`.
+- `anime`: the bundled Anime.js module, useful for the `#animejs(...)` template.
+
+You can pass extra attributes to the outer div with `attrs`, add classes with
+`class`, and append inline styles with `style`.
+
+**Boxjs parameters:**
+
+- `html`: HTML inserted inside the widget ShadowRoot.
+- `css`: CSS inserted in the ShadowRoot before `html`; it is scoped to the widget.
+- `js`: JavaScript setup code evaluated once after the ShadowRoot is created.
+- `height`: widget height in Typst units, scaled with the Slipst viewport.
+- `width`: optional widget width in Typst units; `auto` keeps the default CSS width.
+- `class`: extra classes added to the outer `.slipst-boxjs` element.
+- `style`: extra inline CSS appended to the outer `.slipst-boxjs` element.
+- `attrs`: extra HTML attributes merged into the outer `.slipst-boxjs` element.
+- `kind`: runtime category stored as `box.kind` and reflected in the class `slipst-boxjs-<kind>`.
+
+**JavaScript runtime variables:**
+
+- `root`: the widget `ShadowRoot`. Use it to query elements from your `html`, for example `root.querySelector(".button")`. Prefer `root` over `document` so widgets remain isolated.
+- `host`: the outer generated `<div class="slipst-boxjs ...">`. Use it for outer size, attributes, dataset values, or host-level event listeners.
+- `box.index`: zero-based runtime index of the widget in DOM order.
+- `box.id`: generated unique id of the outer widget, for example `slipst-boxjs-1`.
+- `box.kind`: widget category. It is `"boxjs"` for direct `#boxjs(...)` calls and `"animejs"` for `#animejs(...)`.
+- `anime`: the bundled Anime.js module. It is always available, but mainly intended for `#animejs(...)` templates.
+
+If the setup code returns an object with `onWheel(...)`, Slipst calls it in
+static mode when the mouse wheel is used on the current slip/alter.
+
+### Inline Anime.js Figures
+
+`#animejs(...)` is a convenience template over `#boxjs(...)`. Anime.js is
+bundled once in `slipst.js` and passed to the snippet at runtime.
+It accepts the same public parameters as `#boxjs(...)`, except `kind` is fixed
+to `"animejs"`.
+
+~~~typst
+#animejs(
+  height: 7cm,
+  html: ```html
+    <div class="stage">
+      <div class="ball"></div>
+    </div>
+  ```,
+  css: ```css
+    .stage {
+      position: relative;
+      width: 18em;
+      height: 10em;
+      margin: auto;
+    }
+    .ball {
+      position: absolute;
+      left: 50%;
+      bottom: 1em;
+      width: 3em;
+      height: 3em;
+      border-radius: 999px;
+      background: #f97316;
+    }
+  ```,
+  js: ```js
+    const ball = root.querySelector(".ball");
+    const animation = anime.animate(ball, {
+      translateY: ["0em", "-6em"],
+      duration: 700,
+      loop: true,
+      alternate: true,
+    });
+
+    return {
+      onWheel({ deltaY }) {
+        animation.pause();
+        animation.seek(animation.currentTime + deltaY);
+      },
+    };
+  ```,
+)
+~~~
+
+Middle-click anywhere on the presentation to toggle static mode. In static mode,
+the mouse wheel is sent to Boxjs widgets in the current slip/alter through
+`onWheel(...)` instead of advancing slips. Middle-click again to return to normal
+Slipst navigation. Left-click always advances to the next slip.
+
 ### Handout Export
 
 Slipst can also export a PDF handout containing all slips. To enable this, add the `handout: true` parameter to the `slipst` show rule:

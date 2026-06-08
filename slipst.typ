@@ -1,17 +1,83 @@
 #import "utils.typ": *
 
+// In PDF/preview mode, a pause is only a paragraph break so the document stays readable.
+// In HTML mode, it becomes metadata that _cut uses to split the document into slips.
 #let pause = if dictionary(std).at("html", default: none) == none {
   parbreak()
 } else {
   metadata("slipst-pause")
 }
+
+// Store navigation actions as metadata. They are converted to data-* attributes later.
 #let up(label, offset: 0, dy: 0) = metadata((slipst-action: (up: label, offset: offset, dy: dy)))
 #let alter(num) = metadata((slipst-action: (alter: num)))
+
+// Normalize a raw Typst block, string, or arbitrary value into source text.
+#let _source(it) = {
+  if type(it) == str {
+    it
+  } else if type(it) == content and it.func() == raw {
+    it.text
+  } else {
+    str(it)
+  }
+}
+
+// Describe an inline HTML/CSS/JS box without rendering it immediately.
+// The browser runtime reads the data attributes and instantiates the ShadowRoot.
+// Parameters:
+// - html: markup inserted inside the widget ShadowRoot.
+// - css: local stylesheet inserted before html in the ShadowRoot.
+// - js: setup code evaluated with anime, root, host, and box in scope.
+// - height: widget height in Typst units, scaled with the presentation viewport.
+// - width: optional widget width in Typst units; auto keeps the default CSS width.
+// - class: extra classes appended to the generated .slipst-boxjs element.
+// - style: extra inline CSS appended to the generated .slipst-boxjs element.
+// - attrs: extra HTML attributes merged into the generated .slipst-boxjs element.
+// - kind: runtime category stored in box.kind and reflected as slipst-boxjs-<kind>.
+#let boxjs(html: "", css: "", js: "", height: 6cm, width: auto, class: "", style: "", attrs: (:), kind: "boxjs") = {
+  metadata((slipst-boxjs: (
+    html: _source(html),
+    css: _source(css),
+    js: _source(js),
+    height: height,
+    width: width,
+    class: class,
+    style: style,
+    attrs: attrs,
+    kind: kind,
+  )))
+}
+
+// Anime.js is now a template over the generic boxjs primitive.
+// It keeps the public API small while still passing anime to the JS snippet.
+// Parameters mirror boxjs, except kind is fixed to "animejs".
+// The js snippet can call the bundled Anime.js module through the anime variable.
+#let animejs(html: "", css: "", js: "", height: 6cm, width: auto, class: "", style: "", attrs: (:)) = {
+  boxjs(
+    html: html,
+    css: css,
+    js: js,
+    height: height,
+    width: width,
+    class: class,
+    style: style,
+    attrs: attrs,
+    kind: "animejs",
+  )
+}
 
 #let preview-mode = state("preview-mode", false)
 #let slipst-counter = counter("slipst")
 #let slipst-alter-counter = counter("slipst-alter")
 
+// Reveal content only on selected alter steps.
+// Parameters:
+// - ranges: alter indexes where body should be visible, e.g. "2", "2-", "2-4", or ("1", "3-").
+// - cover: function used when body is outside ranges; hide keeps layout space, `it => none` removes it.
+// - raw: if true, evaluate immediately; otherwise use context so the current alter counter is available.
+// - body: content controlled by the visibility rule.
+// In preview/PDF mode, every alter is shown at once, so body is always returned.
 #let uncover(ranges, cover: hide, raw: false, body) = {
   let inner = () => {
     if preview-mode.get() {
@@ -34,8 +100,10 @@
   }
 }
 
+// Like uncover, but removes the content entirely outside the selected alter range.
 #let only = uncover.with(cover: it => none)
 
+// Split the top-level document content into slips at every #pause marker.
 #let _cut(it) = {
   let (slips, remainder) = it.children.fold((slips: (), remainder: ()), (acc, it) => {
     let (slips, remainder) = acc
@@ -50,6 +118,83 @@
   slips
 }
 
+// Boxjs entries are special metadata and should not be wrapped in html.frame.
+#let _is_boxjs(it) = {
+  it.func() == metadata and type(it.value) == dictionary and it.value.at("slipst-boxjs", default: none) != none
+}
+
+// Render a contiguous Typst content chunk as an HTML frame.
+// This is the main bridge from Typst layout to browser-rendered presentation content.
+#let _frame_chunk(chunk, width: auto, show-fn: it => it, alter-idx: 1) = {
+  let chunk = _strip(chunk)
+  if chunk.len() > 0 {
+    html.frame(show-fn({
+      slipst-alter-counter.update(alter-idx)
+      block(width: width, chunk.join())
+    }))
+  }
+}
+
+// Emit the placeholder DOM node for a Boxjs widget.
+// The actual ShadowRoot, CSS, HTML, and JS controller are created in slipst.ts.
+#let _boxjs_box(spec) = {
+  let height = spec.height
+  assert(type(height) == length, message: "boxjs height must be a length")
+
+  let width = spec.width
+  assert(type(width) == length or width == auto, message: "boxjs width must be a length or auto")
+
+  let box-idx = counter("slipst-boxjs").get().first()
+  let id = "slipst-boxjs-" + str(box-idx)
+
+  let style = "height: calc(" + str(height.to-absolute().cm()) + " * var(--slip-1cm));"
+  if width != auto {
+    style += " width: calc(" + str(width.to-absolute().cm()) + " * var(--slip-1cm));"
+  }
+  if spec.style != "" {
+    style += " " + spec.style
+  }
+
+  let attrs = (
+    id: id,
+    class: ("slipst-boxjs slipst-boxjs-" + spec.kind + " " + spec.class).trim(),
+    style: style,
+    "data-slipst-boxjs-id": id,
+    "data-slipst-boxjs-kind": spec.kind,
+    "data-slipst-boxjs-html": spec.html,
+    "data-slipst-boxjs-css": spec.css,
+    "data-slipst-boxjs-js": spec.js,
+    ..spec.attrs,
+  )
+  counter("slipst-boxjs").step()
+
+  html.elem(
+    "div",
+    attrs: attrs,
+  )
+}
+
+// Convert one slip into a sequence of renderable parts.
+// Normal Typst content is batched into frames, while Boxjs metadata becomes widget divs.
+#let _render_slip_content(slip, width: auto, show-fn: it => it, alter-idx: 1) = {
+  let parts = slip.fold((output: (), chunk: ()), (acc, item) => {
+    let (output, chunk) = acc
+    if _is_boxjs(item) {
+      let spec = item.value.at("slipst-boxjs")
+      (
+        output: output + (_frame_chunk(chunk, width: width, show-fn: show-fn, alter-idx: alter-idx), _boxjs_box(spec)),
+        chunk: (),
+      )
+    } else {
+      (output: output, chunk: chunk + (item,))
+    }
+  })
+  let output = parts.output + (_frame_chunk(parts.chunk, width: width, show-fn: show-fn, alter-idx: alter-idx),)
+  output
+}
+
+// Render a slip as one or more layered HTML divs.
+// Each alter step duplicates the slip in the same grid cell and JS toggles opacity.
 #let _slip(slip, width: auto, show-fn: it => it) = context {
   let slip-idx = slipst-counter.get().first()
   let attrs = (class: "slip", data-slip: str(slip-idx))
@@ -62,6 +207,8 @@
     .filter(it => type(it) == dictionary)
   let up = actions.rev().find(it => it.at("up", default: none) != none)
   let alter = actions.rev().find(it => it.at("alter", default: none) != none)
+
+  // A slip can have several alter states; default is one visible state.
   let alter-num = if type(alter) == dictionary {
     alter.at("alter", default: 1)
   } else {
@@ -70,6 +217,7 @@
   attrs.insert("data-slip-alter-num", str(alter-num))
 
   if type(up) == dictionary {
+    // Resolve the target label into a slip index and expose it to the JS layout code.
     let anchor = up.at("up")
 
     let offset = up.at("offset", default: 0)
@@ -89,6 +237,7 @@
   }
 
   for alter-idx in range(1, alter-num + 1) {
+    // All alters of the same slip occupy the same CSS grid cell.
     let attrs-local = (
       "data-slip-alter-idx": str(alter-idx),
       "style": "grid-row: " + str(slip-idx) + "; grid-column: 1;",
@@ -97,15 +246,19 @@
     html.elem(
       "div",
       attrs: attrs-local,
-      html.frame(show-fn({
-        slipst-alter-counter.update(alter-idx)
-        block(width: width, slip.join())
-      })),
+      {
+        for part in _render_slip_content(slip, width: width, show-fn: show-fn, alter-idx: alter-idx) {
+          part
+        }
+      },
     )
   }
   slipst-counter.step()
 }
 
+// Main show rule. It has two paths:
+// - non-HTML output: show a readable linear preview/handout;
+// - HTML output: generate a complete web document with CSS, JS, and slip DOM nodes.
 #let slipst(body, width: 16cm, spacing: auto, margin: 0.5cm, handout: false, show-fn: it => it) = {
   if dictionary(std).at("html", default: none) == none {
     return context show-fn({
@@ -125,6 +278,7 @@
 
   preview-mode.update(false)
   counter("slipst").update(1)
+  counter("slipst-boxjs").update(1)
 
   fmap(body, it => context {
     let spacing = if spacing == auto {
