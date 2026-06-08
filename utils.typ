@@ -73,17 +73,25 @@
 #assert(_parse_range("2-") == (2, _int_max))
 #assert(_parse_range("2-5") == (2, 6))
 
-// Parse multiple ranges
+// Parse multiple ranges from a string (space-separated) or array of strings.
+// Examples: "2", "2-", "2-5", "1 3", "2-4 7-9", ("2", "4-5")
 #let _parse_ranges(ranges) = {
   if type(ranges) == str {
-    return (_parse_range(ranges),)
+    let parts = ranges.split(" ").filter(s => s.len() > 0)
+    return parts.map(_parse_range)
   }
-  return ranges.map(_parse_range)
+  if type(ranges) == array {
+    return ranges.map(_parse_range)
+  }
+  panic("uncover/only: expected string or array, got " + str(type(ranges)))
 }
 
 #assert(_parse_ranges("2") == ((2, 3),))
 #assert(_parse_ranges("2-") == ((2, _int_max),))
 #assert(_parse_ranges("2-5") == ((2, 6),))
+#assert(_parse_ranges("1 3") == ((1, 2), (3, 4)))
+#assert(_parse_ranges("2-4 7-9") == ((2, 5), (7, 10)))
+#assert(_parse_ranges("1  3") == ((1, 2), (3, 4)))
 #assert(_parse_ranges(("2", "4-5")) == ((2, 3), (4, 6)))
 
 // Check if num is in any of the ranges
@@ -100,4 +108,8 @@
 #assert(not _is_in_ranges(3, _parse_ranges("2")))
 #assert(_is_in_ranges(2, _parse_ranges("2-5")))
 #assert(_is_in_ranges(4, _parse_ranges("2-5")))
+#assert(_is_in_ranges(1, _parse_ranges("1 3")))
+#assert(not _is_in_ranges(2, _parse_ranges("1 3")))
+#assert(_is_in_ranges(3, _parse_ranges("1 3")))
+#assert(_is_in_ranges(7, _parse_ranges("2-4 7-9")))
 #assert(not _is_in_ranges(6, _parse_ranges(("2-5", "7-9"))))

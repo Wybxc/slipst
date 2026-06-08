@@ -12,6 +12,10 @@
 #let up(label, offset: 0, dy: 0) = metadata((slipst-action: (up: label, offset: offset, dy: dy)))
 #let alter(num) = metadata((slipst-action: (alter: num)))
 
+// Start a new horizontal section. This is a strong cut: it also starts a new slip,
+// so authors do not need to write #pause before or after #right().
+#let right() = metadata("slipst-right")
+
 // Normalize a raw Typst block, string, or arbitrary value into source text.
 #let _source(it) = {
   if type(it) == str {
@@ -42,10 +46,10 @@
     js: _source(js),
     height: height,
     width: width,
-    class: class,
-    style: style,
+    class: _source(class),
+    style: _source(style),
     attrs: attrs,
-    kind: kind,
+    kind: _source(kind),
   )))
 }
 
@@ -103,19 +107,63 @@
 // Like uncover, but removes the content entirely outside the selected alter range.
 #let only = uncover.with(cover: it => none)
 
-// Split the top-level document content into slips at every #pause marker.
-#let _cut(it) = {
-  let (slips, remainder) = it.children.fold((slips: (), remainder: ()), (acc, it) => {
-    let (slips, remainder) = acc
-    if it.func() == metadata and it.value == "slipst-pause" {
-      (slips + (remainder,), (it,))
+// Control metadata changes presentation structure but should not create an empty slip by itself.
+#let _is_invisible_metadata(it) = {
+  if it.func() != metadata {
+    return false
+  }
+  if it.value == "slipst-pause" or it.value == "slipst-right" {
+    return true
+  }
+  if type(it.value) == dictionary {
+    return it.value.at("slipst-action", default: none) != none
+  }
+  false
+}
+
+// Append the current remainder as a slip when it contains visible/meaningful content.
+#let _finish_slip(slips, remainder) = {
+  let slip = _strip(remainder)
+  let meaningful = slip.filter(it => not _is_invisible_metadata(it))
+  if meaningful.len() > 0 {
+    slips + (slip,)
+  } else {
+    slips
+  }
+}
+
+// Append the current section when it contains at least one slip.
+#let _finish_section(sections, slips, remainder) = {
+  let slips = _finish_slip(slips, remainder)
+  if slips.len() > 0 {
+    sections + (slips,)
+  } else {
+    sections
+  }
+}
+
+// Split the top-level document into horizontal sections, then vertical slips.
+// #pause starts a new slip in the current section; #right starts a new section
+// and also starts a new slip, so it acts as a strong cut.
+#let _cut_sections(it) = {
+  let sections = ()
+  let slips = ()
+  let remainder = ()
+
+  for child in it.children {
+    if child.func() == metadata and child.value == "slipst-pause" {
+      slips = _finish_slip(slips, remainder)
+      remainder = (child,)
+    } else if child.func() == metadata and child.value == "slipst-right" {
+      sections = _finish_section(sections, slips, remainder)
+      slips = ()
+      remainder = (child,)
     } else {
-      (slips, remainder + (it,))
+      remainder += (child,)
     }
-  })
-  let slips = slips + (remainder,)
-  let slips = slips.map(_strip).filter(slip => slip.len() > 0)
-  slips
+  }
+
+  _finish_section(sections, slips, remainder)
 }
 
 // Boxjs entries are special metadata and should not be wrapped in html.frame.
@@ -157,13 +205,13 @@
 
   let attrs = (
     id: id,
-    class: ("slipst-boxjs slipst-boxjs-" + spec.kind + " " + spec.class).trim(),
-    style: style,
+    class: str(("slipst-boxjs slipst-boxjs-" + str(spec.kind) + " " + str(spec.class)).trim()),
+    style: str(style),
     "data-slipst-boxjs-id": id,
-    "data-slipst-boxjs-kind": spec.kind,
-    "data-slipst-boxjs-html": spec.html,
-    "data-slipst-boxjs-css": spec.css,
-    "data-slipst-boxjs-js": spec.js,
+    "data-slipst-boxjs-kind": str(spec.kind),
+    "data-slipst-boxjs-html": str(spec.html),
+    "data-slipst-boxjs-css": str(spec.css),
+    "data-slipst-boxjs-js": str(spec.js),
     ..spec.attrs,
   )
   counter("slipst-boxjs").step()
@@ -195,9 +243,9 @@
 
 // Render a slip as one or more layered HTML divs.
 // Each alter step duplicates the slip in the same grid cell and JS toggles opacity.
-#let _slip(slip, width: auto, show-fn: it => it) = context {
-  let slip-idx = slipst-counter.get().first()
-  let attrs = (class: "slip", data-slip: str(slip-idx))
+#let _slip(slip, section-idx: 1, slip-idx: 1, width: auto, show-fn: it => it) = context {
+  let global-slip-idx = slipst-counter.get().first()
+  let attrs = (class: "slip", data-section: str(section-idx), data-slip: str(slip-idx), "data-global-slip": str(global-slip-idx))
 
   let actions = slip
     .filter(it => it.func() == metadata)
@@ -256,6 +304,31 @@
   slipst-counter.step()
 }
 
+// Render one horizontal section. Its nested slip-container keeps the existing
+// vertical slip layout local to that section.
+#let _section(slips, section-idx: 1, width: auto, show-fn: it => it) = {
+  html.elem(
+    "div",
+    attrs: (
+      class: "section",
+      "data-section": str(section-idx),
+      "data-section-slip-count": str(slips.len()),
+      style: "grid-column: " + str(section-idx) + "; grid-row: 1;",
+    ),
+    html.elem(
+      "div",
+      attrs: (class: "slip-container", "data-section": str(section-idx)),
+      {
+        let slip-idx = 1
+        for slip in slips {
+          _slip(slip, section-idx: section-idx, slip-idx: slip-idx, width: width, show-fn: show-fn)
+          slip-idx += 1
+        }
+      },
+    ),
+  )
+}
+
 // Main show rule. It has two paths:
 // - non-HTML output: show a readable linear preview/handout;
 // - HTML output: generate a complete web document with CSS, JS, and slip DOM nodes.
@@ -299,10 +372,12 @@
         html.script(read("slipst.js"), type: "module")
       })
       html.body(html.main(html.div(
-        id: "container",
+        id: "section-container",
         {
-          for slip in _cut(it) {
-            _slip(slip, width: width, show-fn: show-fn)
+          let section-idx = 1
+          for section in _cut_sections(it) {
+            _section(section, section-idx: section-idx, width: width, show-fn: show-fn)
+            section-idx += 1
           }
         },
       )))

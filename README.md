@@ -106,6 +106,75 @@ For dynamic selections, `#up` can also accept a function that returns a selector
 
 Refer to the [advanced guide](https://slipst.wybxc.cc/advanced.html).
 
+### Horizontal Sections
+
+Use `#right()` to start a new horizontal section. It is a strong cut: it ends
+the current section and starts the first slip of the next section, so you do not
+need to write `#pause` before or after it.
+
+```typst
+= Introduction
+
+First section, first slip.
+
+#pause
+
+First section, second slip.
+
+#right()
+
+= Method
+
+Second section, first slip.
+```
+
+Navigation uses two axes:
+
+- `ArrowDown`, `PageDown`, `Space`, `Enter`, click, and wheel move vertically to the next slip/alter in the current section.
+- `ArrowUp`, `PageUp`, and `Backspace` move vertically to the previous slip/alter in the current section.
+- `ArrowRight` moves horizontally to the first slip of the next section.
+- `ArrowLeft` moves horizontally to the first slip of the previous section.
+
+The URL hash stores the current position as `#section-slip-alter`, for example
+`#2-4-1` means section 2, slip 4, alter 1.
+
+### Interaction Modes
+
+Slipst has three interaction modes that change how the mouse wheel behaves.
+The overlay in the bottom-right corner shows the current position
+(`section.slip / total`) and its background color reflects the active mode.
+
+| Mode | Wheel | Color |
+|---|---|---|
+| **slip** (default) | Next/previous slip/alter, wraps across sections | Dark |
+| **animation** | Forwarded to boxjs widgets | Blue |
+| **section** | Next/previous section (jumps entire sections) | Orange |
+
+**Switching modes:**
+
+- **Short middle-click** cycles between **slip** and **section** mode.
+- **Long middle-click** (hold >400ms) enters **animation** mode.
+- **Any middle-click** while in animation mode exits back to **slip** mode.
+
+**Section wrapping in slip mode:** when you reach the last slip/alter of a
+section, the wheel automatically jumps to the first slip of the next section.
+Similarly, scrolling up at the beginning of a section jumps to the last
+slip/alter of the previous section.
+
+**Double-click at end of section:** when you are on the last slip/alter of a
+section, double-clicking quickly jumps to the next section. This is useful for
+wireless presenter mice.
+
+**Wheel reactivity:** during rapid wheel scrolling, CSS transitions are
+temporarily disabled for instant feedback. Transitions resume automatically
+after 300ms of inactivity.
+
+To hide the overlay with custom CSS:
+
+```css
+#slipst-overlay { display: none; }
+```
+
 ### Inline Boxjs Widgets
 
 Slipst can embed self-contained HTML/CSS/JavaScript widgets directly in a

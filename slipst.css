@@ -42,7 +42,29 @@ main {
   background-color: white;
 }
 
-#container {
+#section-container {
+  /* The JS changes left to switch between horizontal sections. */
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  grid-template-rows: 100%;
+
+  left: 0;
+  transition: left var(--transition-duration) ease-in-out;
+}
+
+.section {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slip-container {
   /* The JS changes top to create the vertical slip scrolling animation. */
   position: relative;
   width: 100%;
@@ -78,4 +100,25 @@ main {
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
+}
+
+#slipst-overlay {
+  /* Small discreet indicator in the bottom-right corner. */
+  position: absolute;
+  bottom: 1.2em;
+  right: 1.2em;
+  padding: 0.3em 0.7em;
+  border-radius: 0.5em;
+  font-size: 0.75em;
+  font-family: system-ui, -apple-system, sans-serif;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 1000;
+  transition: background 0.3s ease;
+  user-select: none;
+}
+
+#slipst-overlay .slipst-overlay-text {
+  letter-spacing: 0.03em;
 }
