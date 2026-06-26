@@ -46,6 +46,52 @@
 // Speaker notes for the current slip. Rendered as plain text in a separate notes window.
 #let notes(body) = metadata((slipst-notes: _source(body)))
 
+// Describe an inline HTML/CSS/JS box without rendering it immediately.
+// The browser runtime reads the data attributes and instantiates the ShadowRoot.
+// Parameters:
+// - html: markup inserted inside the widget ShadowRoot.
+// - css: local stylesheet inserted before html in the ShadowRoot.
+// - js: setup code evaluated with anime, root, host, and box in scope.
+// - height: widget height in Typst units, scaled with the presentation viewport.
+// - width: optional widget width in Typst units; auto keeps the default CSS width.
+// - class: extra classes appended to the generated .slipst-boxjs element.
+// - style: extra inline CSS appended to the generated .slipst-boxjs element.
+// - attrs: extra HTML attributes merged into the generated .slipst-boxjs element.
+// - kind: runtime category stored in box.kind and reflected as slipst-boxjs-<kind>.
+#let boxjs(html: "", css: "", js: "", height: 6cm, width: auto, class: "", style: "", attrs: (:), kind: "boxjs") = {
+  metadata((
+    slipst-boxjs: (
+      html: _source(html),
+      css: _source(css),
+      js: _source(js),
+      height: height,
+      width: width,
+      class: _source(class),
+      style: _source(style),
+      attrs: attrs,
+      kind: _source(kind),
+    ),
+  ))
+}
+
+// Anime.js is now a template over the generic boxjs primitive.
+// It keeps the public API small while still passing anime to the JS snippet.
+// Parameters mirror boxjs, except kind is fixed to "animejs".
+// The js snippet can call the bundled Anime.js module through the anime variable.
+#let animejs(html: "", css: "", js: "", height: 6cm, width: auto, class: "", style: "", attrs: (:)) = {
+  boxjs(
+    html: html,
+    css: css,
+    js: js,
+    height: height,
+    width: width,
+    class: class,
+    style: style,
+    attrs: attrs,
+    kind: "animejs",
+  )
+}
+
 // Read the current alter index. Use inside #context blocks that wrap cetz.canvas().
 #let get-alter() = slipst-alter-counter.get().first()
 #let get-mode() = preview-mode.get()
