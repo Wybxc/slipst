@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@preact/signals-core": "^1.12.2",
+    "animejs": "^4.0.0",
     "any-touch": "^2.2.0",
     "es-toolkit": "^1.44.0",
     "normalize.css": "^8.0.1"

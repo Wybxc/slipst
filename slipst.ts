@@ -1,4 +1,5 @@
 import { signal, effect } from "@preact/signals-core";
+import * as anime from "animejs";
 import { debounce, isNotNil } from "es-toolkit";
 import AnyTouch from "any-touch";
 
@@ -6,6 +7,7 @@ import AnyTouch from "any-touch";
 // Today Slipst only calls onWheel, mainly for static/manual animation mode.
 type BoxjsController = {
   onWheel?: (context: {
+    anime: typeof anime;
     root: ShadowRoot;
     host: HTMLElement;
     box: BoxjsInfo;
@@ -68,12 +70,19 @@ function initBoxjsBoxes() {
 
     let controller: BoxjsController = {};
     try {
-      const setup = new Function("root", "host", "box", js) as (
+      // User snippets are stored as source text in data attributes and evaluated here.
+      // Parameters passed to the snippet:
+      // - anime: bundled Anime.js module;
+      // - root: ShadowRoot containing the user's html/css;
+      // - host: outer .slipst-boxjs element;
+      // - box: metadata object with index, id, and kind.
+      const setup = new Function("anime", "root", "host", "box", js) as (
+        anime: typeof anime,
         root: ShadowRoot,
         host: HTMLElement,
         box: BoxjsInfo,
       ) => BoxjsController | void;
-      controller = setup(root, host, info) ?? {};
+      controller = setup(anime, root, host, info) ?? {};
     } catch (error) {
       console.error("Slipst boxjs widget failed to initialize", error);
     }
@@ -110,6 +119,7 @@ function sendWheelToBoxjsBoxes(event: WheelEvent) {
 
   boxes.forEach(([host, box]) => {
     box.controller.onWheel?.({
+      anime,
       root: box.root,
       host,
       box: box.info,
@@ -125,6 +135,7 @@ function sendDeltaToBoxjsBoxes(deltaY: number) {
   const boxes = activeBoxjsBoxes();
   boxes.forEach(([host, box]) => {
     box.controller.onWheel?.({
+      anime,
       root: box.root,
       host,
       box: box.info,
