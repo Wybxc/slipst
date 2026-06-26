@@ -104,6 +104,8 @@ function activeBoxjsBoxes() {
       10,
     );
 
+    // Previous slips can stay visible in Slipst, but they are not active.
+    // Static-mode wheel events must only reach the current slip/alter.
     return (
       sectionIndex === currentSection.value &&
       slipIndex === currentSlip.value &&
@@ -425,7 +427,6 @@ if (main) {
       restoreTransitions();
 
       if (currentMode.value === "animation") {
-        // WIRE: feat/boxjs-animejs replaces this block
         sendWheelToBoxjsBoxes(event);
         event.preventDefault();
       } else if (currentMode.value === "section") {
