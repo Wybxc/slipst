@@ -1,3 +1,12 @@
 .DS_Store
-node_modules
-dist
+/dist
+/examples/*
+!/examples/fonts
+!/examples/.gitignore
+!/examples/advanced.typ
+!/examples/pres.typ
+!/examples/prime-numbers.typ
+!/examples/test.typ
+!/examples/tutorial.typ
+/node_modules
+/docs.html

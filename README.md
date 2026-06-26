@@ -14,7 +14,7 @@ typst compile your-presentation.typ --format html --features html
 ## Quick Start
 
 ```typst
-#import "@preview/slipst:0.3.0": *
+#import "@preview/slipst:0.4.0": *
 #show: slipst
 
 = First Slip
@@ -49,6 +49,9 @@ You can customize the presentation using the `slipst.with()` function:
   width: 16cm,
   spacing: auto,
   margin: 0.5cm,
+  duration: 500,
+  end-dy: -10pt,
+  start-dy: -10pt,
   show-fn: it => it
 )
 ```
@@ -58,6 +61,9 @@ You can customize the presentation using the `slipst.with()` function:
 - `width`: The width of the presentation area.
 - `spacing`: Vertical spacing between slips. Default is `auto` (same as `par.spacing`).
 - `margin`: Margin between the presentation area and the viewport edges.
+- `duration`: Transition duration in milliseconds (default 500).
+- `end-dy`: Offset from bottom of last slip to bottom of screen.
+- `start-dy`: Offset from top of first slip to top of screen.
 - `show-fn`: A function that takes slip content and returns the displayed content, allowing custom decorations or wrappers.
 
 > **Note:** The values for `width`, `spacing`, and `margin` are _logical lengths_. They scale proportionally with screen size to maintain consistent relative spacing across different devices.
@@ -70,11 +76,14 @@ Use `#pause` to define where one slip ends and the next begins. It takes no para
 #pause
 ```
 
-The `#up` command makes the selected slip slide upward out of view when the current slip is displayed. It accepts a [selector](https://typst.app/docs/reference/foundations/selector/) as its argument.
+The `#up` command makes the selected slip slide upward out of view when the current slip is displayed. Without an argument, it targets the current slip. With an argument, it accepts a [selector](https://typst.app/docs/reference/foundations/selector/).
 
 ```typst
+#up()
 #up(<label>)
 ```
+
+Labels passed to `#up(<label>)` should generally refer to content defined before the `#up` call, ideally in a previous slip. Forward labels and `here` are ordinary Typst locations and may resolve before the current slip counter is stepped, which can produce surprising offsets. Prefer `#up()` to target the current slip.
 
 A common pattern is to label a `#pause` and reference it in `#up`:
 
@@ -90,16 +99,57 @@ You can also provide an `offset` to `#up` to select a slip relative to the chose
 #up(<label>, offset: -1)
 ```
 
+The `offset` value is counted in slips, not in screen units: `0` selects the labelled slip, `-1` selects the previous slip, and `1` selects the next slip.
+
 And the `dy` parameter allows you to specify a custom vertical distance for the sliding animation. For example, to scroll to 5cm below the top of the selected slip:
 
 ```typst
 #up(<label>, dy: 5cm)
 ```
 
-For dynamic selections, `#up` can also accept a function that returns a selector. This is useful with context-aware selectors like [`here()`](https://typst.app/docs/reference/introspection/here/). Combined with `offset`, you can slide up the previous slip without an explicit label:
+Use `end: true` to align the bottom of the selected slip with the bottom of the viewport instead of aligning its top with the top of the viewport:
 
 ```typst
-#up(() => here(), offset: -1)
+#up(<label>, end: true)
+```
+
+Combined with `offset`, `#up()` can select slips relative to the current slip without an explicit label:
+
+```typst
+#up(offset: -1)
+```
+
+### Horizontal Sections
+
+Use `#right()` to start a new horizontal section. It is a strong cut: it ends
+the current section and starts the first slip of the next section, so you do not
+need to write `#pause` before or after it.
+
+```typst
+= Introduction
+Content here.
+#right()
+
+= Method
+New section starts here.
+```
+
+Navigation:
+
+- Wheel / Arrow Up/Down: navigate slips within a section
+- Arrow Left/Right: navigate between sections
+- Click / Space: navigate slips (with transitions)
+- Double-click / Double-space at end of section: jump to next section
+
+### Speaker Notes
+
+Use `#notes[...]` to attach notes to the current slip. Press `N` during the
+presentation to open a separate notes window.
+
+```typst
+#pause
+Here is my point.
+#notes[Remember to mention the budget.]
 ```
 
 ### Replacing Animations
@@ -120,11 +170,19 @@ Then you can export the PDF version of your presentation using the `pdf` format:
 typst compile your-presentation.typ --format pdf
 ```
 
+With `slide-mode: true` as a sys input, each section becomes a separate page:
+
+```bash
+typst compile your-presentation.typ --format pdf --input slide-mode=true
+```
+
 ## Roadmap
 
 - Basic slip functionality with up/down navigation.
 - Persistent state across sessions.
-- Slips replacing animations, as well as Cetz and Flether animations.
+- Slips replacing animations, as well as Cetz and Fletcher animations.
+- Horizontal sections with left/right navigation.
+- Speaker notes.
 - (TODO) Custom aspect ratios for the visual area.
 - (TODO) Visual structure for subslips.
 - (TODO) Whiteboard mode for live drawing.
@@ -132,6 +190,18 @@ typst compile your-presentation.typ --format pdf
 - PDF handout export.
 
 ## Changelog
+
+### 0.4.0
+
+- Added horizontal sections with `#right()`.
+- Added speaker notes with `#notes[...]`.
+- Added `#up()` without argument to target the current slip.
+- Added `end: true` parameter to `#up` for bottom-aligned scrolling.
+- Added `duration`, `end-dy`, `start-dy` parameters to `slipst` show rule.
+- Added `slide-mode` sys input for per-section PDF pages.
+- Navigation now section-aware: Arrow Left/Right for sections, Up/Down for slips.
+- Overlay showing current section.slip position.
+- Fixed: `#up` with forward labels now resolves correctly.
 
 ### 0.3.0
 

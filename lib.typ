@@ -1,1 +1,1 @@
-#import "slipst.typ": alter, get-alter, get-mode, only, pause, slipst, uncover, up
+#import "slipst.typ": alter, animejs, boxjs, get-alter, get-mode, next-pdf-slide, notes, only, pause, right, slipst, uncover, up

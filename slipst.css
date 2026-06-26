@@ -1,19 +1,24 @@
 @import url("normalize.css");
 
 :root {
+  /* Typst passes logical lengths in centimeters; CSS scales them to viewport units. */
   --slip-width: 1;
   --slip-margin: 0;
   --slip-spacing: 0;
 
+  /* 1 Typst cm expressed in the responsive browser coordinate system. */
   --slip-1cm: calc(1 / var(--slip-width) * 100em);
 
   --relative-spacing: calc(var(--slip-spacing) * var(--slip-1cm));
   --relative-margin: calc(var(--slip-margin) * var(--slip-1cm));
 
-  --transition-duration: 0.5s;
+  --transition-duration-configured: 0.5s;
+  --transition-duration: var(--transition-duration-configured);
+  --section-transition-duration: var(--transition-duration-configured);
 }
 
 body {
+  /* Center the fixed 16:9 presentation viewport in the browser window. */
   display: grid;
   place-items: center;
   width: 100vw;
@@ -24,6 +29,7 @@ body {
 }
 
 main {
+  /* Use the largest 16:9 rectangle that fits inside the viewport. */
   overflow: hidden;
   width: calc(100vh * 16 / 9);
   height: 100vh;
@@ -38,7 +44,30 @@ main {
   background-color: white;
 }
 
-#container {
+#section-container {
+  /* The JS changes left to switch between horizontal sections. */
+  position: relative;
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  grid-template-rows: 100%;
+
+  left: 0;
+  transition: left var(--section-transition-duration) ease-in-out;
+}
+
+.section {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slip-container {
+  /* The JS changes top to create the vertical slip scrolling animation. */
   position: relative;
   width: 100%;
 
@@ -60,9 +89,41 @@ main {
 }
 
 .slip {
+  /* Slips are always present in the DOM; JS fades the active layers in/out. */
   width: 100%;
 
   opacity: 0;
   mix-blend-mode: plus-lighter;
   transition: opacity var(--transition-duration) ease-in-out;
+}
+
+.slipst-boxjs {
+  /* Inline widgets manage their own internal layout inside a ShadowRoot. */
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+#slipst-overlay {
+  /* Small discreet indicator in the bottom-right corner. */
+  position: absolute;
+  bottom: 1.2em;
+  right: 1.2em;
+  padding: 0.3em 0.7em;
+  border-radius: 0.5em;
+  font-size: 0.75em;
+  font-family:
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: rgba(255, 255, 255, 0.9);
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+  z-index: 1000;
+  transition: background 0.3s ease;
+  user-select: none;
+}
+
+#slipst-overlay .slipst-overlay-text {
+  letter-spacing: 0.03em;
 }

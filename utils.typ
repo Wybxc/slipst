@@ -1,20 +1,25 @@
+// Cache Typst function identities used to inspect content nodes below.
 #let sequence = [].func()
 #let styled = text(red)[].func()
 #let space = [ ].func()
 #let symbol-func = $.$.body.func()
 #let context-func = (context {}).func()
 
+// Sanity checks for Typst internals this file relies on.
 #assert($mu$.body.func() == symbol-func)
 #assert(type(sym.mu) == symbol)
 
+// Test whether a content value was produced by a specific Typst function.
 #let _is(it, func) = {
   type(it) == content and it.func() == func
 }
 
+// Empty structural nodes should not create empty slips/frames.
 #let _should_strip(it) = {
   _is(it, parbreak) or _is(it, space) or (_is(it, sequence) and it.children.len() == 0)
 }
 
+// Remove leading and trailing empty paragraph/space/sequence nodes from a content list.
 #let _strip(slip) = {
   let _ = while _should_strip(slip.first(default: none)) {
     slip.remove(0)
@@ -25,6 +30,7 @@
   slip
 }
 
+// Apply func to the meaningful root sequence while preserving outer styling.
 #let fmap(it, func) = {
   assert(type(it) == content)
   if it.func() == sequence {
