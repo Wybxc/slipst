@@ -1,1 +1,1 @@
-#import "slipst.typ": pause, slipst, up, alter, uncover, only
+#import "slipst.typ": alter, get-alter, get-mode, only, pause, slipst, uncover, up

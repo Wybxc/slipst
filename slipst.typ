@@ -1,5 +1,9 @@
 #import "utils.typ": *
 
+#let preview-mode = state("preview-mode", false)
+#let slipst-counter = counter("slipst")
+#let slipst-alter-counter = counter("slipst-alter")
+
 #let pause = if dictionary(std).at("html", default: none) == none {
   parbreak()
 } else {
@@ -8,11 +12,19 @@
 #let up(label, offset: 0, dy: 0) = metadata((slipst-action: (up: label, offset: offset, dy: dy)))
 #let alter(num) = metadata((slipst-action: (alter: num)))
 
-#let preview-mode = state("preview-mode", false)
-#let slipst-counter = counter("slipst")
-#let slipst-alter-counter = counter("slipst-alter")
+// Read the current alter index. Use inside #context blocks that wrap cetz.canvas().
+#let get-alter() = slipst-alter-counter.get().first()
+#let get-mode() = preview-mode.get()
 
-#let uncover(ranges, cover: hide, raw: false, body) = {
+// Reveal content only on selected alter steps.
+// Parameters:
+// - ranges: alter indexes where body should be visible, e.g. "2", "2-", "2-4", or ("1", "3-").
+// - cover: function used when body is outside ranges; hide keeps layout space, `it => none` removes it.
+// - raw: kept for API compatibility, has no effect.
+// - _alter: override the alter index. Required inside cetz.canvas() where context is unavailable.
+// - body: content controlled by the visibility rule.
+// In preview/PDF mode, every alter is shown at once, so body is always returned.
+#let uncover(ranges, cover: hide, raw: false, alter: none, mode: none, body) = {
   let inner = () => {
     if preview-mode.get() {
       return body
@@ -27,10 +39,21 @@
       cover(body)
     }
   }
-  if raw {
-    inner()
+  if mode != none and alter != none {
+    if mode {
+      return body
+    }
+    // No context needed: the caller provides the alter index directly.
+    // Used inside cetz.canvas() where Typst context is not available.
+    let ranges = _parse_ranges(ranges)
+    let should-show = _is_in_ranges(alter, ranges)
+    if should-show { body } else { cover(body) }
   } else {
-    context inner()
+    if raw {
+      inner()
+    } else {
+      context inner()
+    }
   }
 }
 
