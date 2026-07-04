@@ -2,6 +2,19 @@ import { signal, effect } from "@preact/signals-core";
 import { debounce, isNotNil } from "es-toolkit";
 import AnyTouch from "any-touch";
 
+const DEFAULT_TRANSITION_DURATION = "0.4s";
+
+// Avoid initial fade/scroll animation when the page first loads or reloads.
+document.documentElement.style.setProperty("--transition-duration", "0s");
+requestAnimationFrame(() => {
+  requestAnimationFrame(() => {
+    document.documentElement.style.setProperty(
+      "--transition-duration",
+      DEFAULT_TRANSITION_DURATION,
+    );
+  });
+});
+
 document.querySelectorAll(".slip > svg").forEach((svg) => {
   if (svg instanceof SVGElement) {
     svg.style.width = "100%";
@@ -23,9 +36,9 @@ function parseHash() {
     slip = 1;
   }
 
-  let alter = parseInt(hashGroups?.alter ?? "0", 10);
-  if (isNaN(alter) || alter < 0) {
-    alter = 0;
+  let alter = parseInt(hashGroups?.alter ?? "1", 10);
+  if (isNaN(alter) || alter < 1) {
+    alter = 1;
   }
 
   return { slip, alter };
@@ -207,7 +220,7 @@ if (document.defaultView) {
     setTimeout(() => {
       document.documentElement.style.setProperty(
         "--transition-duration",
-        "0.5s",
+        DEFAULT_TRANSITION_DURATION,
       );
     }, 1);
   });
