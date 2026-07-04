@@ -12,14 +12,17 @@
 #let slipst-counter = counter("slipst")
 #let slipst-alter-counter = counter("slipst-alter")
 
+#let get-preview-mode() = preview-mode.get()
+#let get-alter() = slipst-alter-counter.get().first()
+
 #let uncover(ranges, cover: hide, raw: false, body) = {
   let inner = () => {
-    if preview-mode.get() {
+    if get-preview-mode() {
       return body
     }
 
     let ranges = _parse_ranges(ranges)
-    let alter-idx = slipst-alter-counter.get().first()
+    let alter-idx = get-alter()
     let should-show = _is_in_ranges(alter-idx, ranges)
     if should-show {
       body
